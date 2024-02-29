@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Messaging</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #messageInput {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    #messageList {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .message {
+      background-color: #f0f0f0;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Real-Time Messaging</h1>
+
+  <ul id="messageList"></ul>
+  <input type="text" id="messageInput" placeholder="Type your message...">
+  <button onclick="postMessage()">Post</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Function to post a message
+    function postMessage() {
+      const messageInput = document.getElementById("messageInput");
+      const messageList = document.getElementById("messageList");
+
+      // Get current date and time
+      const date = new Date();
+      const dateString = date.toLocaleString();
+
+      // Create a new list item for the message
+      const li = document.createElement("li");
+      li.className = "message";
+      li.innerHTML = `<strong>${dateString}</strong>: ${messageInput.value}`;
+
+      // Append the new message to the list
+      messageList.appendChild(li);
+
+      // Emit the new message to the server
+      socket.emit('postMessage', { content: messageInput.value, timestamp: dateString });
+
+      // Clear the input field
+      messageInput.value = '';
+    }
+
+    // Function to update messages when a new message is received
+    function updateMessages(message) {
+      const messageList = document.getElementById("messageList");
+
+      // Create a new list item for the message
+      const li = document.createElement("li");
+      li.className = "message";
+      li.innerHTML = `<strong>${message.timestamp}</strong>: ${message.content}`;
+
+      // Append the new message to the list
+      messageList.appendChild(li);
+    }
+
+    // Load existing messages when the page is loaded
+    socket.on('loadMessages', (existingMessages) => {
+      existingMessages.forEach((message) => {
+        updateMessages(message);
+      });
+    });
+
+    // Listen for new messages from the server
+    socket.on('updateMessages', updateMessages);
+  </script>
+
+</body>
+</html>
